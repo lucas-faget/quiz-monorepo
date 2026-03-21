@@ -42,14 +42,11 @@ export interface BitButtonProps
 function Button({ children, asChild, ...props }: BitButtonProps) {
     const { variant, size, className, font } = props;
 
-    const hasBorder = variant !== "ghost" && variant !== "link" && size !== "icon";
-
     return (
         <ShadcnButton
             {...props}
             className={cn(
                 "relative inline-flex items-center justify-center gap-1.5 rounded-none border-none transition-transform active:translate-y-1",
-                hasBorder && "m-1.5",
                 size === "icon" && "mx-1 my-0",
                 font !== "normal" && "retro",
                 className,

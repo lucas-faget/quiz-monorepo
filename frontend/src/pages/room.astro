@@ -1,0 +1,10 @@
+---
+import Layout from "../layouts/Layout.astro";
+import RoomPanels from "@/components/RoomPanels";
+---
+
+<Layout>
+    <div class="flex min-h-screen items-center justify-center">
+        <RoomPanels client:load />
+    </div>
+</Layout>

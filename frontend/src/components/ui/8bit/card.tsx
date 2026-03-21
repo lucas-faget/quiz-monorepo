@@ -34,21 +34,21 @@ function Card({ className, font, ...props }: BitCardProps) {
     return (
         <div
             className={cn(
-                "bg-card text-card-foreground border-foreground dark:border-ring relative border-y-6 !p-0",
+                "bg-card text-card-foreground border-foreground dark:border-ring relative border-y-6 p-0!",
                 className,
             )}
         >
             <ShadcnCard
                 {...props}
                 className={cn(
-                    "bg-card text-card-foreground flex h-full !w-full flex-col rounded-none border-0 shadow-none",
+                    "bg-card text-card-foreground flex h-full w-full! flex-col rounded-none border-0 shadow-none",
                     font !== "normal" && "retro",
                     className,
                 )}
             />
 
             <div
-                className="border-foreground dark:border-ring pointer-events-none absolute inset-0 -mx-1.5 border-x-6"
+                className={cn("pointer-events-none absolute inset-0 -mx-1.5 border-x-6 border-inherit")}
                 aria-hidden="true"
             />
         </div>
