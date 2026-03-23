@@ -1,4 +1,5 @@
 import { Card, CardContent, CardHeader, CardFooter, CardTitle } from "@/components/ui/8bit/card";
+import { ScrollArea } from "@/components/ui/8bit/scroll-area";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/8bit/avatar";
 import { Label } from "@/components/ui/8bit/label";
 import { Textarea } from "@/components/ui/8bit/textarea";
@@ -11,18 +12,20 @@ export default function ChatPanel({ players }: { players: LeaderboardPlayer[] })
             <CardHeader>
                 <CardTitle className="text-center">CHAT</CardTitle>
             </CardHeader>
-            <CardContent>
-                <div className="flex flex-col gap-8">
-                    {players.map((player, index) => (
-                        <Dialogue
-                            avatarSrc={player.avatar}
-                            avatarFallback={player.avatarFallback}
-                            title={player.name}
-                            description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                            player={index % 2 === 0}
-                        />
-                    ))}
-                </div>
+            <CardContent className="min-h-0 flex-1 p-0">
+                <ScrollArea className="h-full">
+                    <div className="flex flex-col gap-8 px-6 py-2">
+                        {players.map((player, index) => (
+                            <Dialogue
+                                avatarSrc={player.avatar}
+                                avatarFallback={player.avatarFallback}
+                                title={player.name}
+                                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
+                                player={index % 2 === 0}
+                            />
+                        ))}
+                    </div>
+                </ScrollArea>
             </CardContent>
             <CardFooter>
                 <Label className="flex w-full items-start gap-2.5">

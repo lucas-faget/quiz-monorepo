@@ -4,9 +4,10 @@ import { cva } from "class-variance-authority";
 
 import { cn } from "@/lib/utils";
 
+import { ScrollArea } from "@/components/ui/8bit/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/8bit/avatar";
 import { Badge } from "@/components/ui/8bit/badge";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/8bit/card";
+import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/8bit/card";
 import { Separator } from "@/components/ui/8bit/separator";
 import "@/components/ui/8bit/styles/retro.css";
 
@@ -115,78 +116,86 @@ export function Leaderboard({
                 </CardHeader>
             )}
 
-            <CardContent className="space-y-5">
-                <div className="space-y-2">
-                    {sortedPlayers.length === 0 ? (
-                        <div className="text-muted-foreground py-8 text-center">
-                            <p className="retro text-sm">No players yet</p>
-                        </div>
-                    ) : (
-                        sortedPlayers.map((player) => {
-                            const rankVariant = getRankVariant(player.rank!, player.isCurrentPlayer!);
+            <CardContent className="flex min-h-0 flex-1 flex-col p-0">
+                <ScrollArea className="h-full">
+                    <div className="space-y-2 px-4">
+                        {sortedPlayers.length === 0 ? (
+                            <div className="text-muted-foreground py-8 text-center">
+                                <p className="retro text-sm">No players yet</p>
+                            </div>
+                        ) : (
+                            sortedPlayers.map((player) => {
+                                const rankVariant = getRankVariant(player.rank!, player.isCurrentPlayer!);
 
-                            return (
-                                <div key={player.id} className={cn(playerItemVariants({ rank: rankVariant }), "retro")}>
-                                    <div className="flex items-center gap-3">
-                                        {showAvatar && (
-                                            <Avatar variant="pixel" font="retro" className="size-10">
-                                                {player.avatar && <AvatarImage src={player.avatar} alt={player.name} />}
-                                                <AvatarFallback className="retro text-xs">
-                                                    {player.avatarFallback || player.name.charAt(0).toUpperCase()}
-                                                </AvatarFallback>
-                                            </Avatar>
-                                        )}
-
-                                        {showRank && !showAvatar && (
-                                            <div className={cn(rankBadgeVariants({ rank: rankVariant }))}>
-                                                <span className="text-xs">{getRankIcon(player.rank!)}</span>
-                                            </div>
-                                        )}
-
-                                        <div className="min-w-0 flex-1">
-                                            <div className="flex items-center gap-4">
-                                                <span
-                                                    className={cn(
-                                                        "retro truncate text-xs font-medium md:text-sm",
-                                                        player.isCurrentPlayer && "text-primary font-bold",
+                                return (
+                                    <div
+                                        key={player.id}
+                                        className={cn(playerItemVariants({ rank: rankVariant }), "retro")}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            {showAvatar && (
+                                                <Avatar variant="pixel" font="retro" className="size-10">
+                                                    {player.avatar && (
+                                                        <AvatarImage src={player.avatar} alt={player.name} />
                                                     )}
-                                                >
-                                                    {player.name}
-                                                </span>
-                                                {player.isCurrentPlayer && <Badge className="text-[9px]">YOU</Badge>}
+                                                    <AvatarFallback className="retro text-xs">
+                                                        {player.avatarFallback || player.name.charAt(0).toUpperCase()}
+                                                    </AvatarFallback>
+                                                </Avatar>
+                                            )}
+
+                                            {showRank && !showAvatar && (
+                                                <div className={cn(rankBadgeVariants({ rank: rankVariant }))}>
+                                                    <span className="text-xs">{getRankIcon(player.rank!)}</span>
+                                                </div>
+                                            )}
+
+                                            <div className="min-w-0 flex-1">
+                                                <div className="flex items-center gap-4">
+                                                    <span
+                                                        className={cn(
+                                                            "retro truncate text-xs font-medium md:text-sm",
+                                                            player.isCurrentPlayer && "text-primary font-bold",
+                                                        )}
+                                                    >
+                                                        {player.name}
+                                                    </span>
+                                                    {player.isCurrentPlayer && (
+                                                        <Badge className="text-[9px]">YOU</Badge>
+                                                    )}
+                                                </div>
                                             </div>
                                         </div>
+
+                                        <div className="flex items-center gap-2">
+                                            <span
+                                                className={cn(
+                                                    "retro text-xs font-bold md:text-sm",
+                                                    rankVariant === "first" && "text-yellow-600",
+                                                    rankVariant === "second" && "text-gray-600",
+                                                    rankVariant === "third" && "text-amber-700",
+                                                    player.isCurrentPlayer && "text-primary",
+                                                )}
+                                            >
+                                                {formatScore(player.score)}
+                                            </span>
+                                        </div>
                                     </div>
-
-                                    <div className="flex items-center gap-2">
-                                        <span
-                                            className={cn(
-                                                "retro text-xs font-bold md:text-sm",
-                                                rankVariant === "first" && "text-yellow-600",
-                                                rankVariant === "second" && "text-gray-600",
-                                                rankVariant === "third" && "text-amber-700",
-                                                player.isCurrentPlayer && "text-primary",
-                                            )}
-                                        >
-                                            {formatScore(player.score)}
-                                        </span>
-                                    </div>
-                                </div>
-                            );
-                        })
-                    )}
-                </div>
-
-                <Separator />
-
+                                );
+                            })
+                        )}
+                    </div>
+                </ScrollArea>
+            </CardContent>
+            <CardFooter>
                 {sortedPlayers.length > 0 && (
-                    <div className="mt-4 pt-4">
+                    <div className="w-full">
                         <p className={cn("text-muted-foreground retro text-center text-xs")}>
                             Showing top {Math.min(sortedPlayers.length, maxPlayers)} players
                         </p>
                     </div>
                 )}
-            </CardContent>
+            </CardFooter>
         </Card>
     );
 }
