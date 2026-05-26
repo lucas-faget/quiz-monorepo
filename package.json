@@ -11,10 +11,11 @@
     },
     "keywords": [],
     "author": "lucas-faget",
-    "packageManager": "pnpm@11.1.2",
+    "packageManager": "pnpm@11.5.0",
     "devDependencies": {
         "prettier": "^3.8.3",
         "prettier-plugin-astro": "^0.14.1",
-        "prettier-plugin-tailwindcss": "^0.8.0"
+        "prettier-plugin-tailwindcss": "^0.8.0",
+        "supabase": "^2.101.0"
     }
 }
