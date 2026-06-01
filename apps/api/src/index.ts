@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import { openAPIRouteHandler } from "hono-openapi";
 import { games } from "./routes/games";
 
 const app = new Hono();
@@ -13,9 +14,18 @@ app.use(
     }),
 );
 
-app.get("/", (c) => {
-    return c.text("Hello Hono!");
-});
+app.get(
+    "/openapi",
+    openAPIRouteHandler(app, {
+        documentation: {
+            info: {
+                title: "Quiz API",
+                version: "1.0.0",
+                description: "Quiz API",
+            },
+        },
+    }),
+);
 
 app.route("/games", games);
 

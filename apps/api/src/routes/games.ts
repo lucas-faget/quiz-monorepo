@@ -1,100 +1,265 @@
 import { Hono } from "hono";
-import type { Context } from "hono";
+import { describeRoute, resolver, validator } from "hono-openapi";
 import { createGameService } from "../lib/game_service";
+import {
+    AnswerBodySchema,
+    AnswerParamsSchema,
+    AnswerResponseSchema,
+    CreateGameResponseSchema,
+    EndGameParamsSchema,
+    EndGameResponseSchema,
+    EndQuestionParamsSchema,
+    EndQuestionResponseSchema,
+    GetPlayersParamsSchema,
+    GetPlayersResponseSchema,
+    JoinGameBodySchema,
+    JoinGameParamsSchema,
+    JoinGameResponseSchema,
+    StartGameParamsSchema,
+    StartGameResponseSchema,
+    StartQuestionParamsSchema,
+    StartQuestionResponseSchema,
+} from "../schemas/games";
 
 export const games = new Hono();
 
 /**
  * POST /games
  */
-games.post("/", async (c: Context) => {
-    const service = createGameService(c.env);
-    const game = await service.createGame();
+games.post(
+    "/",
+    describeRoute({
+        summary: "Create a game",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Game created",
+                content: {
+                    "application/json": {
+                        schema: resolver(CreateGameResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    async (c) => {
+        const service = createGameService(c.env);
+        const game = await service.createGame();
 
-    return c.json(game);
-});
+        return c.json(game);
+    },
+);
 
 /**
  * POST /games/:id/join
  */
-games.post("/:id/join", async (c: Context) => {
-    const gameId = c.req.param("id");
-    const { name } = await c.req.json();
+games.post(
+    "/:id/join",
+    describeRoute({
+        summary: "Join a game",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Player joined",
+                content: {
+                    "application/json": {
+                        schema: resolver(JoinGameResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", JoinGameParamsSchema),
+    validator("json", JoinGameBodySchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
+        const { name } = c.req.valid("json");
 
-    const service = createGameService(c.env);
-    const player = await service.joinGame(gameId, name);
+        const service = createGameService(c.env);
+        const player = await service.joinGame(id, name);
 
-    return c.json(player);
-});
+        return c.json(player);
+    },
+);
 
 /**
  * GET /games/:id/players
  */
-games.get("/:id/players", async (c: Context) => {
-    const gameId = c.req.param("id");
+games.get(
+    "/:id/players",
+    describeRoute({
+        summary: "Get players",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Player list",
+                content: {
+                    "application/json": {
+                        schema: resolver(GetPlayersResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", GetPlayersParamsSchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
 
-    const service = createGameService(c.env);
-    const players = await service.getPlayers(gameId);
+        const service = createGameService(c.env);
+        const players = await service.getPlayers(id);
 
-    return c.json(players);
-});
+        return c.json(players);
+    },
+);
 
 /**
  * POST /games/:id/start
  */
-games.post("/:id/start", async (c: Context) => {
-    const gameId = c.req.param("id");
+games.post(
+    "/:id/start",
+    describeRoute({
+        summary: "Start game",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Game started",
+                content: {
+                    "application/json": {
+                        schema: resolver(StartGameResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", StartGameParamsSchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
 
-    const service = createGameService(c.env);
-    const game = await service.startGame(gameId);
-    return c.json(game);
-});
+        const service = createGameService(c.env);
+        const game = await service.startGame(id);
+
+        return c.json(game);
+    },
+);
 
 /**
  * POST /games/:id/start-question
  */
-games.post("/:id/start-question", async (c: Context) => {
-    const gameId = c.req.param("id");
+games.post(
+    "/:id/start-question",
+    describeRoute({
+        summary: "Start question",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Question started",
+                content: {
+                    "application/json": {
+                        schema: resolver(StartQuestionResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", StartQuestionParamsSchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
 
-    const service = createGameService(c.env);
-    const game = await service.startQuestion(gameId);
+        const service = createGameService(c.env);
+        const question = await service.startQuestion(id);
 
-    return c.json(game);
-});
+        return c.json(question);
+    },
+);
 
 /**
  * POST /games/:id/answer
  */
-games.post("/:id/answer", async (c: Context) => {
-    const gameId = c.req.param("id");
-    const { playerId, answer } = await c.req.json();
+games.post(
+    "/:id/answer",
+    describeRoute({
+        summary: "Answer question",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Answer result",
+                content: {
+                    "application/json": {
+                        schema: resolver(AnswerResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", AnswerParamsSchema),
+    validator("json", AnswerBodySchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
+        const { playerId, answer } = c.req.valid("json");
 
-    const service = createGameService(c.env);
-    const result = await service.answer(gameId, playerId, answer);
+        const service = createGameService(c.env);
+        const result = await service.answer(id, playerId, answer);
 
-    return c.json(result);
-});
+        return c.json(result);
+    },
+);
 
 /**
  * POST /games/:id/end-question
  */
-games.post("/:id/end-question", async (c: Context) => {
-    const gameId = c.req.param("id");
+games.post(
+    "/:id/end-question",
+    describeRoute({
+        summary: "End question",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Question ended",
+                content: {
+                    "application/json": {
+                        schema: resolver(EndQuestionResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", EndQuestionParamsSchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
 
-    const service = createGameService(c.env);
-    const game = await service.endQuestion(gameId);
+        const service = createGameService(c.env);
+        const question = await service.endQuestion(id);
 
-    return c.json(game);
-});
+        return c.json(question);
+    },
+);
 
 /**
  * POST /games/:id/end
  */
-games.post("/:id/end", async (c: Context) => {
-    const gameId = c.req.param("id");
+games.post(
+    "/:id/end",
+    describeRoute({
+        summary: "End game",
+        tags: ["Games"],
+        responses: {
+            200: {
+                description: "Game ended",
+                content: {
+                    "application/json": {
+                        schema: resolver(EndGameResponseSchema),
+                    },
+                },
+            },
+        },
+    }),
+    validator("param", EndGameParamsSchema),
+    async (c) => {
+        const { id } = c.req.valid("param");
 
-    const service = createGameService(c.env);
-    const game = await service.endGame(gameId);
+        const service = createGameService(c.env);
+        const game = await service.endGame(id);
 
-    return c.json(game);
-});
+        return c.json(game);
+    },
+);
