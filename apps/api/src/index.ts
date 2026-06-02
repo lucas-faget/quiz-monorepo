@@ -1,6 +1,7 @@
 import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { openAPIRouteHandler } from "hono-openapi";
+import { swaggerUI } from "@hono/swagger-ui";
 import { games } from "./routes/games";
 
 const app = new Hono();
@@ -24,6 +25,13 @@ app.get(
                 description: "Quiz API",
             },
         },
+    }),
+);
+
+app.get(
+    "/docs",
+    swaggerUI({
+        url: "/openapi",
     }),
 );
 
