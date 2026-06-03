@@ -1,5 +1,6 @@
 import { Hono } from "hono";
 import { describeRoute, resolver, validator } from "hono-openapi";
+import { ok } from "../lib/openapi";
 import { createGameService } from "../lib/game_service";
 import {
     AnswerBodySchema,
@@ -32,14 +33,7 @@ games.post(
         summary: "Create a game",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Game created",
-                content: {
-                    "application/json": {
-                        schema: resolver(CreateGameResponseSchema),
-                    },
-                },
-            },
+            ...ok(CreateGameResponseSchema, "Game created"),
         },
     }),
     async (c) => {
@@ -59,14 +53,7 @@ games.post(
         summary: "Join a game",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Player joined",
-                content: {
-                    "application/json": {
-                        schema: resolver(JoinGameResponseSchema),
-                    },
-                },
-            },
+            ...ok(JoinGameResponseSchema, "Player joined"),
         },
     }),
     validator("param", JoinGameParamsSchema),
@@ -91,14 +78,7 @@ games.get(
         summary: "Get players",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Player list",
-                content: {
-                    "application/json": {
-                        schema: resolver(GetPlayersResponseSchema),
-                    },
-                },
-            },
+            ...ok(GetPlayersResponseSchema, "Player list"),
         },
     }),
     validator("param", GetPlayersParamsSchema),
@@ -121,14 +101,7 @@ games.post(
         summary: "Start game",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Game started",
-                content: {
-                    "application/json": {
-                        schema: resolver(StartGameResponseSchema),
-                    },
-                },
-            },
+            ...ok(GetPlayersResponseSchema, "Game started"),
         },
     }),
     validator("param", StartGameParamsSchema),
@@ -151,14 +124,7 @@ games.post(
         summary: "Start question",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Question started",
-                content: {
-                    "application/json": {
-                        schema: resolver(StartQuestionResponseSchema),
-                    },
-                },
-            },
+            ...ok(StartQuestionResponseSchema, "Question started"),
         },
     }),
     validator("param", StartQuestionParamsSchema),
@@ -181,14 +147,7 @@ games.post(
         summary: "Answer question",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Answer result",
-                content: {
-                    "application/json": {
-                        schema: resolver(AnswerResponseSchema),
-                    },
-                },
-            },
+            ...ok(AnswerResponseSchema, "Answer result"),
         },
     }),
     validator("param", AnswerParamsSchema),
@@ -213,14 +172,7 @@ games.post(
         summary: "End question",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Question ended",
-                content: {
-                    "application/json": {
-                        schema: resolver(EndQuestionResponseSchema),
-                    },
-                },
-            },
+            ...ok(EndQuestionResponseSchema, "Answer Question ended"),
         },
     }),
     validator("param", EndQuestionParamsSchema),
@@ -243,14 +195,7 @@ games.post(
         summary: "End game",
         tags: ["Games"],
         responses: {
-            200: {
-                description: "Game ended",
-                content: {
-                    "application/json": {
-                        schema: resolver(EndGameResponseSchema),
-                    },
-                },
-            },
+            ...ok(EndGameResponseSchema, "Game ended"),
         },
     }),
     validator("param", EndGameParamsSchema),
