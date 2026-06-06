@@ -1,5 +1,5 @@
 import { Hono } from "hono";
-import { describeRoute, resolver, validator } from "hono-openapi";
+import { describeRoute, validator } from "hono-openapi";
 import { ok } from "../lib/openapi";
 import { createGameService } from "../lib/game_service";
 import {
@@ -20,7 +20,7 @@ import {
     StartGameResponseSchema,
     StartQuestionParamsSchema,
     StartQuestionResponseSchema,
-} from "../schemas/games";
+} from "../lib/schemas/games";
 
 export const games = new Hono();
 
@@ -101,7 +101,7 @@ games.post(
         summary: "Start game",
         tags: ["Games"],
         responses: {
-            ...ok(GetPlayersResponseSchema, "Game started"),
+            ...ok(StartGameResponseSchema, "Game started"),
         },
     }),
     validator("param", StartGameParamsSchema),

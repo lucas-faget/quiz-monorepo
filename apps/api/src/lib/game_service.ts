@@ -1,6 +1,6 @@
 import { createSupabase } from "./supabase";
-import { GameStatus } from "./game_status";
-import { GameEvent } from "./game_event";
+import { GameStatus } from "./types/game_status";
+import { GameEvent } from "./types/game_event";
 
 export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_KEY: string }) {
     const supabase = createSupabase(env);
@@ -30,7 +30,7 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
     }
 
     async function joinGame(gameId: string, name: string) {
-        const { data: player } = await supabase
+        const { data: player, error } = await supabase
             .from("players")
             .insert({
                 game_id: gameId,

@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { GameStatus } from "../lib/game_status";
+import { GameStatus } from "../types/game_status";
 
 export const GameSchema = v.object({
     id: v.string(),
