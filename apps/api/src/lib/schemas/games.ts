@@ -30,6 +30,10 @@ export const GameEventSchema = v.object({
     payload: v.any(),
 });
 
+export const ErrorResponseSchema = v.object({
+    error: v.string(),
+});
+
 /**
  * POST /games
  */

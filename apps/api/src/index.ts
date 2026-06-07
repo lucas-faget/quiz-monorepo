@@ -2,6 +2,7 @@ import { Hono } from "hono";
 import { cors } from "hono/cors";
 import { openAPIRouteHandler } from "hono-openapi";
 import { swaggerUI } from "@hono/swagger-ui";
+import { AppError } from "./lib/errors/app_error";
 import { games } from "./routes/games";
 
 const app = new Hono();
@@ -34,6 +35,20 @@ app.get(
         url: "/openapi",
     }),
 );
+
+app.onError((err, c) => {
+    if (err instanceof AppError) {
+        if (err.statusCode >= 500) {
+            console.error(err.message, err.cause);
+        }
+
+        return c.json({ error: err.message }, err.statusCode);
+    }
+
+    console.error(err);
+
+    return c.json({ error: "Internal server error" }, 500);
+});
 
 app.route("/games", games);
 

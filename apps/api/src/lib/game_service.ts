@@ -1,21 +1,38 @@
 import { createSupabase } from "./supabase";
 import { GameStatus } from "./types/game_status";
 import { GameEvent } from "./types/game_event";
+import { AppError } from "./errors/app_error";
 
 export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_KEY: string }) {
+    const questionCount: number = 5;
+    const maxAttempt: number = 3;
+    const questionDuration: number = 30_000;
+
     const supabase = createSupabase(env);
 
     async function createGame() {
-        const { data: game } = await supabase.from("games").insert({}).select().single();
-
-        const { data: questions } = await supabase
+        const { data: questions, error: questionsError } = await supabase
             .from("questions")
             .select("id")
             .order("created_at", { ascending: true })
-            .limit(5);
+            .limit(questionCount);
 
-        if (!questions || questions.length === 0) {
-            throw new Error("Not enough questions");
+        if (questionsError) {
+            throw new AppError("Failed to fetch questions", 500, questionsError);
+        }
+
+        if (!questions || questions.length < questionCount) {
+            throw new AppError("Not enough questions to create a game");
+        }
+
+        const { data: game, error: gameError } = await supabase.from("games").insert({}).select().single();
+
+        if (gameError) {
+            throw new AppError("Failed to create game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Failed to create game", 500);
         }
 
         const gameQuestions = questions.map((q, index) => ({
@@ -24,13 +41,27 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
             position: index,
         }));
 
-        await supabase.from("game_questions").insert(gameQuestions);
+        const { error: gameQuestionsError } = await supabase.from("game_questions").insert(gameQuestions);
+
+        if (gameQuestionsError) {
+            throw new AppError("Failed to add questions", 500, gameQuestionsError);
+        }
 
         return game;
     }
 
     async function joinGame(gameId: string, name: string) {
-        const { data: player, error } = await supabase
+        const { data: game, error: gameError } = await supabase.from("games").select("id").eq("id", gameId).single();
+
+        if (gameError) {
+            throw new AppError("Failed to fetch game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
+
+        const { data: player, error: playerError } = await supabase
             .from("players")
             .insert({
                 game_id: gameId,
@@ -39,6 +70,14 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
             })
             .select()
             .single();
+
+        if (playerError) {
+            throw new AppError("Failed to join game", 500, playerError);
+        }
+
+        if (!player) {
+            throw new AppError("Failed to join game", 500);
+        }
 
         await supabase.from("game_events").insert({
             game_id: gameId,
@@ -50,17 +89,21 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
     }
 
     async function getPlayers(gameId: string) {
-        const { data: players } = await supabase
+        const { data: players, error: playersError } = await supabase
             .from("players")
             .select("*")
             .eq("game_id", gameId)
             .order("score", { ascending: false });
 
-        return players;
+        if (playersError) {
+            throw new AppError("Failed to fetch players", 500, playersError);
+        }
+
+        return players ?? [];
     }
 
     async function startGame(gameId: string) {
-        const { data: game } = await supabase
+        const { data: game, error: gameError } = await supabase
             .from("games")
             .update({
                 status: GameStatus.Ongoing,
@@ -68,6 +111,14 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
             .eq("id", gameId)
             .select()
             .single();
+
+        if (gameError) {
+            throw new AppError("Failed to update game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
 
         await supabase.from("game_events").insert({
             game_id: gameId,
@@ -79,36 +130,66 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
     }
 
     async function getQuestion(gameId: string, position: number) {
-        const { data } = await supabase
+        const { data: gameQuestion, error: gameQuestionError } = await supabase
             .from("game_questions")
             .select("question_id")
             .eq("game_id", gameId)
             .eq("position", position)
             .single();
 
-        const { data: question } = await supabase
+        if (gameQuestionError) {
+            throw new AppError("Failed to fetch question", 500, gameQuestionError);
+        }
+
+        if (!gameQuestion) {
+            throw new AppError("Question not found", 404);
+        }
+
+        const { data: question, error: questionError } = await supabase
             .from("questions")
-            .select("id, title")
-            .eq("id", data.question_id)
+            .select("id, title, accepted_answers")
+            .eq("id", gameQuestion.question_id)
             .single();
+
+        if (questionError) {
+            throw new AppError("Failed to fetch question", 500, questionError);
+        }
+
+        if (!question) {
+            throw new AppError("Question not found", 404);
+        }
 
         return question;
     }
 
     async function startQuestion(gameId: string) {
-        const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
+        const { data: game, error: gameError } = await supabase.from("games").select("*").eq("id", gameId).single();
+
+        if (gameError) {
+            throw new AppError("Failed to fetch game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
 
         const position = game.current_question_position + 1;
 
-        await supabase
+        if (position >= questionCount) {
+            throw new AppError("No more questions available", 409);
+        }
+
+        const { error: updateError } = await supabase
             .from("games")
             .update({
                 current_question_position: position,
                 current_question_start: new Date().toISOString(),
             })
-            .eq("id", gameId)
-            .select()
-            .single();
+            .eq("id", gameId);
+
+        if (updateError) {
+            throw new AppError("Failed to start question", 500, updateError);
+        }
 
         const question = await getQuestion(gameId, position);
 
@@ -122,30 +203,66 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
     }
 
     async function answer(gameId: string, playerId: string, answer: string) {
-        const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
+        const { data: game, error: gameError } = await supabase.from("games").select("*").eq("id", gameId).single();
+
+        if (gameError) {
+            throw new AppError("Failed to fetch game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
+
+        if (game.status !== GameStatus.Ongoing) {
+            throw new AppError("Game is not ongoing", 409);
+        }
+
+        // Ensure the player belongs to this game to prevent cross-game answer injection
+        const { data: player, error: playerError } = await supabase
+            .from("players")
+            .select("id")
+            .eq("id", playerId)
+            .eq("game_id", gameId)
+            .single();
+
+        if (playerError) {
+            throw new AppError("Failed to fetch player", 500, playerError);
+        }
+
+        if (!player) {
+            throw new AppError("Player not found", 403);
+        }
+
+        if (!game.current_question_start) {
+            throw new AppError("Question not started");
+        }
 
         const start = new Date(game.current_question_start).getTime();
         const elapsed = Date.now() - start;
 
-        if (elapsed > 30_000) {
-            throw new Error("Time elapsed");
+        if (elapsed > questionDuration) {
+            throw new AppError("Time elapsed");
         }
 
-        const question = await getAnswer(gameId, game.current_question_position);
+        const question = await getQuestion(gameId, game.current_question_position);
 
         const isCorrect = question.accepted_answers.includes(answer);
 
-        const { count } = await supabase
+        const { count, error: countError } = await supabase
             .from("answers")
             .select("*", { count: "exact", head: true })
             .eq("player_id", playerId)
             .eq("question_id", question.id);
 
-        if ((count ?? 0) >= 3) {
-            throw new Error("Maximum number of attemps reached");
+        if (countError) {
+            throw new AppError("Failed to count answers", 500, countError);
         }
 
-        await supabase.from("answers").insert({
+        if ((count ?? 0) >= maxAttempt) {
+            throw new AppError("Maximum number of attempts reached");
+        }
+
+        const { error: answerError } = await supabase.from("answers").insert({
             game_id: gameId,
             player_id: playerId,
             question_id: question.id,
@@ -153,28 +270,25 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
             is_correct: isCorrect,
         });
 
+        if (answerError) {
+            throw new AppError("Failed to save answer", 500, answerError);
+        }
+
         return { isCorrect };
     }
 
-    async function getAnswer(gameId: string, position: number) {
-        const { data } = await supabase
-            .from("game_questions")
-            .select("question_id")
-            .eq("game_id", gameId)
-            .eq("position", position)
-            .single();
-
-        const { data: question } = await supabase.from("questions").select("*").eq("id", data.question_id).single();
-
-        return question;
-    }
-
     async function endQuestion(gameId: string) {
-        const { data: game } = await supabase.from("games").select("*").eq("id", gameId).single();
+        const { data: game, error: gameError } = await supabase.from("games").select("*").eq("id", gameId).single();
 
-        const position = game.current_question_position;
+        if (gameError) {
+            throw new AppError("Failed to fetch game", 500, gameError);
+        }
 
-        const question = await getAnswer(gameId, position);
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
+
+        const question = await getQuestion(gameId, game.current_question_position);
 
         await supabase.from("game_events").insert({
             game_id: gameId,
@@ -186,7 +300,7 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
     }
 
     async function endGame(gameId: string) {
-        const { data } = await supabase
+        const { data: game, error: gameError } = await supabase
             .from("games")
             .update({
                 status: GameStatus.Finished,
@@ -195,13 +309,21 @@ export function createGameService(env: { SUPABASE_URL: string; SUPABASE_SECRET_K
             .select()
             .single();
 
+        if (gameError) {
+            throw new AppError("Failed to update game", 500, gameError);
+        }
+
+        if (!game) {
+            throw new AppError("Game not found", 404);
+        }
+
         await supabase.from("game_events").insert({
             game_id: gameId,
             type: GameEvent.End,
             payload: {},
         });
 
-        return data;
+        return game;
     }
 
     return {

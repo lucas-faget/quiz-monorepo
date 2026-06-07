@@ -1,6 +1,6 @@
 import { Hono } from "hono";
 import { describeRoute, validator } from "hono-openapi";
-import { ok } from "../lib/openapi";
+import { badRequest, conflict, internalServerError, notFound, ok } from "../lib/openapi";
 import { createGameService } from "../lib/game_service";
 import {
     AnswerBodySchema,
@@ -11,6 +11,7 @@ import {
     EndGameResponseSchema,
     EndQuestionParamsSchema,
     EndQuestionResponseSchema,
+    ErrorResponseSchema,
     GetPlayersParamsSchema,
     GetPlayersResponseSchema,
     JoinGameBodySchema,
@@ -34,6 +35,8 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(CreateGameResponseSchema, "Game created"),
+            ...badRequest(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     async (c) => {
@@ -54,6 +57,8 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(JoinGameResponseSchema, "Player joined"),
+            ...notFound(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", JoinGameParamsSchema),
@@ -79,6 +84,7 @@ games.get(
         tags: ["Games"],
         responses: {
             ...ok(GetPlayersResponseSchema, "Player list"),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", GetPlayersParamsSchema),
@@ -102,6 +108,8 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(StartGameResponseSchema, "Game started"),
+            ...notFound(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", StartGameParamsSchema),
@@ -125,6 +133,9 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(StartQuestionResponseSchema, "Question started"),
+            ...notFound(ErrorResponseSchema),
+            ...conflict(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", StartQuestionParamsSchema),
@@ -148,6 +159,10 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(AnswerResponseSchema, "Answer result"),
+            ...badRequest(ErrorResponseSchema),
+            ...notFound(ErrorResponseSchema),
+            ...conflict(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", AnswerParamsSchema),
@@ -172,7 +187,9 @@ games.post(
         summary: "End question",
         tags: ["Games"],
         responses: {
-            ...ok(EndQuestionResponseSchema, "Answer Question ended"),
+            ...ok(EndQuestionResponseSchema, "Question ended"),
+            ...notFound(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", EndQuestionParamsSchema),
@@ -196,6 +213,8 @@ games.post(
         tags: ["Games"],
         responses: {
             ...ok(EndGameResponseSchema, "Game ended"),
+            ...notFound(ErrorResponseSchema),
+            ...internalServerError(ErrorResponseSchema),
         },
     }),
     validator("param", EndGameParamsSchema),
