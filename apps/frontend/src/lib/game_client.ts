@@ -59,12 +59,12 @@ export function createGameClient(gameId?: string) {
         });
     }
 
-    async function startQuestion() {
+    async function next() {
         if (!gameId) {
             throw new Error("gameId is required");
         }
 
-        return api(`/games/${gameId}/start-question`, {
+        return api(`/games/${gameId}/next`, {
             method: "POST",
         });
     }
@@ -80,16 +80,6 @@ export function createGameClient(gameId?: string) {
                 playerId,
                 answer,
             }),
-        });
-    }
-
-    async function endQuestion() {
-        if (!gameId) {
-            throw new Error("gameId is required");
-        }
-
-        return api(`/games/${gameId}/end-question`, {
-            method: "POST",
         });
     }
 
@@ -109,9 +99,8 @@ export function createGameClient(gameId?: string) {
         joinGame,
         getPlayers,
         startGame,
-        startQuestion,
+        next,
         answer,
-        endQuestion,
         endGame,
     };
 }

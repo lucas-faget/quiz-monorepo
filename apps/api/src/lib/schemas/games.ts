@@ -72,20 +72,17 @@ export const StartGameParamsSchema = v.object({
     id: v.string(),
 });
 
-export const StartGameResponseSchema = GameSchema;
+export const StartGameResponseSchema = GameEventSchema;
 
 /**
- * POST /games/:id/start-question
+ * POST /games/:id/next
  */
 
-export const StartQuestionParamsSchema = v.object({
+export const NextParamsSchema = v.object({
     id: v.string(),
 });
 
-export const StartQuestionResponseSchema = v.object({
-    id: v.string(),
-    title: v.string(),
-});
+export const NextResponseSchema = GameEventSchema;
 
 /**
  * POST /games/:id/answer
@@ -105,16 +102,6 @@ export const AnswerResponseSchema = v.object({
 });
 
 /**
- * POST /games/:id/end-question
- */
-
-export const EndQuestionParamsSchema = v.object({
-    id: v.string(),
-});
-
-export const EndQuestionResponseSchema = QuestionSchema;
-
-/**
  * POST /games/:id/end
  */
 
@@ -122,4 +109,4 @@ export const EndGameParamsSchema = v.object({
     id: v.string(),
 });
 
-export const EndGameResponseSchema = GameSchema;
+export const EndGameResponseSchema = GameEventSchema;

@@ -9,19 +9,19 @@ import {
     CreateGameResponseSchema,
     EndGameParamsSchema,
     EndGameResponseSchema,
-    EndQuestionParamsSchema,
-    EndQuestionResponseSchema,
     ErrorResponseSchema,
     GetPlayersParamsSchema,
     GetPlayersResponseSchema,
     JoinGameBodySchema,
     JoinGameParamsSchema,
     JoinGameResponseSchema,
+    NextParamsSchema,
+    NextResponseSchema,
     StartGameParamsSchema,
     StartGameResponseSchema,
-    StartQuestionParamsSchema,
-    StartQuestionResponseSchema,
 } from "../lib/schemas/games";
+import { AppError } from "../lib/errors/app_error";
+import { GameStatus } from "../lib/types/game_status";
 
 export const games = new Hono();
 
@@ -117,35 +117,57 @@ games.post(
         const { id } = c.req.valid("param");
 
         const service = createGameService(c.env);
-        const game = await service.startGame(id);
+        await service.startGame(id);
+        const event = await service.startQuestion(id, 1);
 
-        return c.json(game);
+        return c.json(event);
     },
 );
 
 /**
- * POST /games/:id/start-question
+ * POST /games/:id/next
  */
 games.post(
-    "/:id/start-question",
+    "/:id/next",
     describeRoute({
-        summary: "Start question",
+        summary: "Go to the next step",
         tags: ["Games"],
         responses: {
-            ...ok(StartQuestionResponseSchema, "Question started"),
+            ...ok(NextResponseSchema, "Next step"),
             ...notFound(ErrorResponseSchema),
-            ...conflict(ErrorResponseSchema),
             ...internalServerError(ErrorResponseSchema),
         },
     }),
-    validator("param", StartQuestionParamsSchema),
+    validator("param", NextParamsSchema),
     async (c) => {
         const { id } = c.req.valid("param");
 
         const service = createGameService(c.env);
-        const question = await service.startQuestion(id);
+        const game = await service.getGame(id);
 
-        return c.json(question);
+        if (game.status !== GameStatus.Ongoing) {
+            throw new AppError("Game is not running", 409);
+        }
+
+        const position = game.current_question_position;
+
+        if (game.current_question_start) {
+            const event = await service.endQuestion(id, position);
+
+            if (position === service.questionCount) {
+                await service.endGame(id);
+            }
+
+            return c.json(event);
+        }
+
+        if (position === service.questionCount) {
+            throw new AppError("Game is over", 409);
+        }
+
+        const event = await service.startQuestion(id, position + 1);
+
+        return c.json(event);
     },
 );
 
@@ -175,31 +197,6 @@ games.post(
         const result = await service.answer(id, playerId, answer);
 
         return c.json(result);
-    },
-);
-
-/**
- * POST /games/:id/end-question
- */
-games.post(
-    "/:id/end-question",
-    describeRoute({
-        summary: "End question",
-        tags: ["Games"],
-        responses: {
-            ...ok(EndQuestionResponseSchema, "Question ended"),
-            ...notFound(ErrorResponseSchema),
-            ...internalServerError(ErrorResponseSchema),
-        },
-    }),
-    validator("param", EndQuestionParamsSchema),
-    async (c) => {
-        const { id } = c.req.valid("param");
-
-        const service = createGameService(c.env);
-        const question = await service.endQuestion(id);
-
-        return c.json(question);
     },
 );
 
