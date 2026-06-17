@@ -27,7 +27,14 @@ export const GameEventSchema = v.object({
     id: v.optional(v.string()),
     game_id: v.string(),
     type: v.string(),
-    payload: v.any(),
+    payload: GameSchema,
+});
+
+export const QuestionEventSchema = v.object({
+    id: v.optional(v.string()),
+    game_id: v.string(),
+    type: v.string(),
+    payload: QuestionSchema,
 });
 
 export const ErrorResponseSchema = v.object({
@@ -82,7 +89,7 @@ export const NextParamsSchema = v.object({
     id: v.string(),
 });
 
-export const NextResponseSchema = GameEventSchema;
+export const NextResponseSchema = QuestionEventSchema;
 
 /**
  * POST /games/:id/answer
