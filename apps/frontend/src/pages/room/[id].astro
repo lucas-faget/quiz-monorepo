@@ -1,0 +1,14 @@
+---
+export const prerender = false;
+
+import Layout from "@/layouts/Layout.astro";
+import RoomPanels from "@/components/RoomPanels";
+
+const { id } = Astro.params;
+---
+
+<Layout>
+    <div class="flex min-h-screen items-center justify-center">
+        <RoomPanels client:load roomId={id} />
+    </div>
+</Layout>

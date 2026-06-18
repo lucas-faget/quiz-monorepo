@@ -4,8 +4,17 @@ import { Label } from "@/components/ui/8bit/label";
 import { Input } from "@/components/ui/8bit/input";
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "@/components/ui/8bit/input-otp";
 import { Button } from "@/components/ui/8bit/button";
+import { createGameClient } from "@/lib/game_client";
 
 export default function RoomForm() {
+    const game = createGameClient();
+
+    async function handleCreate() {
+        const room = await game.createGame();
+
+        window.location.assign(`/room/${room.id}`);
+    }
+
     return (
         <Tabs defaultValue="create">
             <TabsList className="grid w-full grid-cols-2">
@@ -32,7 +41,7 @@ export default function RoomForm() {
                     </CardContent>
 
                     <CardFooter className="flex flex-col gap-4">
-                        <Button className="w-full" onClick={() => window.location.assign("/room")}>
+                        <Button className="w-full" onClick={handleCreate}>
                             Create
                         </Button>
                     </CardFooter>

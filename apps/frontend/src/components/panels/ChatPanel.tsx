@@ -5,8 +5,9 @@ import { Label } from "@/components/ui/8bit/label";
 import { Textarea } from "@/components/ui/8bit/textarea";
 import Dialogue from "@/components/ui/8bit/blocks/dialogue";
 import type { LeaderboardPlayer } from "@/components/ui/8bit/blocks/leaderboard";
+import type { Message } from "@/types/Message";
 
-export default function ChatPanel({ players }: { players: LeaderboardPlayer[] }) {
+export default function ChatPanel({ players, messages }: { players: LeaderboardPlayer[]; messages: Message[] }) {
     return (
         <Card className="h-full">
             <CardHeader>
@@ -15,26 +16,40 @@ export default function ChatPanel({ players }: { players: LeaderboardPlayer[] })
             <CardContent className="min-h-0 flex-1 p-0">
                 <ScrollArea className="h-full">
                     <div className="flex flex-col gap-8 px-6 py-2">
-                        {players.map((player, index) => (
-                            <Dialogue
-                                avatarSrc={player.avatar}
-                                avatarFallback={player.avatarFallback}
-                                title={player.name}
-                                description="Lorem ipsum dolor sit amet, consectetur adipiscing elit."
-                                player={index % 2 === 0}
-                            />
-                        ))}
+                        {messages.map((message, index) => {
+                            const player = players.find((p) => p.id === message.playerId);
+
+                            return message.type === "player" && player ? (
+                                <Dialogue
+                                    key={message.id}
+                                    avatarSrc={player.avatar}
+                                    avatarFallback={player.avatarFallback}
+                                    title={player.name}
+                                    description={message.content}
+                                    player={player.isCurrentPlayer ?? false}
+                                />
+                            ) : (
+                                <Dialogue
+                                    key={message.id}
+                                    avatarSrc="https://8bitcn.com/images/8-bit-skull.png"
+                                    avatarFallback="SY"
+                                    description={message.content}
+                                />
+                            );
+                        })}
                     </div>
                 </ScrollArea>
             </CardContent>
             <CardFooter>
-                <Label className="flex w-full items-start gap-2.5">
-                    <Avatar>
-                        <AvatarImage src={players[4].avatar} alt="@8bitcn" />
-                        <AvatarFallback>{players[4].avatarFallback}</AvatarFallback>
-                    </Avatar>
-                    <Textarea className="min-w-0 flex-1" placeholder="Type your message here." />
-                </Label>
+                {players[0] && (
+                    <Label className="flex w-full items-start gap-2.5">
+                        <Avatar>
+                            <AvatarImage src={players[0].avatar} alt="@8bitcn" />
+                            <AvatarFallback>{players[0].avatarFallback}</AvatarFallback>
+                        </Avatar>
+                        <Textarea className="min-w-0 flex-1" placeholder="Type your message here." />
+                    </Label>
+                )}
             </CardFooter>
         </Card>
     );
