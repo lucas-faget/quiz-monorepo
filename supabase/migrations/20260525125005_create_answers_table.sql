@@ -5,5 +5,5 @@ create table answers (
     question_id uuid references questions(id),
     answer text not null,
     is_correct boolean default false,
-    created_at timestamp default now()
+    created_at timestamptz default now()
 );

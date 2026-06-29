@@ -3,5 +3,5 @@ create table questions (
     title text not null,
     answer text not null,
     accepted_answers jsonb not null,
-    created_at timestamp default now()
+    created_at timestamptz default now()
 );

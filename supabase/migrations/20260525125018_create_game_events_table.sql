@@ -3,5 +3,5 @@ create table game_events (
     game_id uuid references games(id) on delete cascade,
     type text not null,
     payload jsonb,
-    created_at timestamp default now()
+    created_at timestamptz default now()
 );

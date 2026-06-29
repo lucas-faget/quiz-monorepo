@@ -4,5 +4,5 @@ create table players (
     name text not null,
     score int default 0,
     is_host boolean default false,
-    created_at timestamp default now()
+    created_at timestamptz default now()
 );
