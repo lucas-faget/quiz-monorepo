@@ -8,7 +8,6 @@ import { ScrollArea } from "@/components/ui/8bit/scroll-area";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/8bit/avatar";
 import { Badge } from "@/components/ui/8bit/badge";
 import { Card, CardContent, CardFooter, CardHeader, CardTitle } from "@/components/ui/8bit/card";
-import { Separator } from "@/components/ui/8bit/separator";
 import "@/components/ui/8bit/styles/retro.css";
 
 export interface LeaderboardPlayer {

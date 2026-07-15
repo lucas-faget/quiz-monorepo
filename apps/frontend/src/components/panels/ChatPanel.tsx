@@ -7,7 +7,15 @@ import Dialogue from "@/components/ui/8bit/blocks/dialogue";
 import type { LeaderboardPlayer } from "@/components/ui/8bit/blocks/leaderboard";
 import type { Message } from "@/types/Message";
 
-export default function ChatPanel({ players, messages }: { players: LeaderboardPlayer[]; messages: Message[] }) {
+export default function ChatPanel({
+    messages,
+    players,
+    player,
+}: {
+    messages: Message[];
+    players: LeaderboardPlayer[];
+    player?: LeaderboardPlayer;
+}) {
     return (
         <Card className="h-full">
             <CardHeader>
@@ -41,11 +49,11 @@ export default function ChatPanel({ players, messages }: { players: LeaderboardP
                 </ScrollArea>
             </CardContent>
             <CardFooter>
-                {players[0] && (
+                {player && (
                     <Label className="flex w-full items-start gap-2.5">
                         <Avatar>
-                            <AvatarImage src={players[0].avatar} alt="@8bitcn" />
-                            <AvatarFallback>{players[0].avatarFallback}</AvatarFallback>
+                            <AvatarImage src={player.avatar} alt="@8bitcn" />
+                            <AvatarFallback>{player.avatarFallback}</AvatarFallback>
                         </Avatar>
                         <Textarea className="min-w-0 flex-1" placeholder="Type your message here." />
                     </Label>

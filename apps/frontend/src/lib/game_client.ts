@@ -1,5 +1,6 @@
 import { api } from "./api";
 import { supabase } from "./supabase";
+import type { Player } from "@/types/Player";
 
 export function createGameClient(gameId?: string) {
     function subscribe(callback: (event: { type: string; payload: any }) => void) {
@@ -30,7 +31,7 @@ export function createGameClient(gameId?: string) {
         });
     }
 
-    async function joinGame(name: string) {
+    async function joinGame(name: string): Promise<Player> {
         if (!gameId) {
             throw new Error("gameId is required");
         }
@@ -41,7 +42,7 @@ export function createGameClient(gameId?: string) {
         });
     }
 
-    async function getPlayers() {
+    async function getPlayers(): Promise<Player[]> {
         if (!gameId) {
             throw new Error("gameId is required");
         }
@@ -69,7 +70,7 @@ export function createGameClient(gameId?: string) {
         });
     }
 
-    async function answer(playerId: string, answer: string) {
+    async function answer(playerId: string, answer: string): Promise<boolean> {
         if (!gameId) {
             throw new Error("gameId is required");
         }

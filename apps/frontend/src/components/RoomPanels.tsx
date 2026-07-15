@@ -8,35 +8,38 @@ import {
     MenubarSeparator,
     MenubarTrigger,
 } from "@/components/ui/8bit/menubar";
+import { toast } from "@/components/ui/8bit/toast";
 import LeaderboardPanel from "@/components/panels/LeaderboardPanel";
 import QuestionPanel from "@/components/panels/QuestionPanel";
 import ChatPanel from "@/components/panels/ChatPanel";
 import type { LeaderboardPlayer } from "@/components/ui/8bit/blocks/leaderboard";
 import { createGameClient } from "@/lib/game_client";
 import { supabase } from "@/lib/supabase";
-import type { Message } from "@/types/Message";
+import type { Player } from "@/types/Player";
 import type { Question } from "@/types/Question";
+import type { Answer } from "@/types/Answer";
+import type { Message } from "@/types/Message";
 
 export default function RoomPanels({ roomId }: { roomId: string }) {
     const game = createGameClient(roomId);
 
+    const [playerId, setPlayerId] = useState<string | undefined>(undefined);
     const [players, setPlayers] = useState<LeaderboardPlayer[]>([]);
     const [question, setQuestion] = useState<Question | undefined>(undefined);
+    const [answers, setAnswers] = useState<Answer[]>([]);
     const [messages, setMessages] = useState<Message[]>([]);
 
-    function toLeaderboardPlayer(p: any): LeaderboardPlayer {
+    const player: LeaderboardPlayer | undefined = players.find((p) => p.id === playerId);
+
+    function toLeaderboardPlayer(p: Player): LeaderboardPlayer {
         return {
             id: p.id,
             name: p.name ?? "Unknown",
             score: p.score ?? 0,
+            isCurrentPlayer: p.id === playerId,
             avatar: "https://8bitcn.com/images/goblin.png",
             avatarFallback: p.name.slice(0, 2).toUpperCase(),
         };
-    }
-
-    async function loadPlayers() {
-        const players = await game.getPlayers();
-        setPlayers(players.map((p: any) => toLeaderboardPlayer(p)));
     }
 
     function addMessage(content: string, type: "player" | "system" = "system", playerId?: string) {
@@ -51,9 +54,32 @@ export default function RoomPanels({ roomId }: { roomId: string }) {
         ]);
     }
 
+    async function loadPlayers() {
+        const players: Player[] = await game.getPlayers();
+        setPlayers(players.map((p: Player) => toLeaderboardPlayer(p)));
+    }
+
+    async function submitAnswer(answer: string) {
+        if (playerId) {
+            try {
+                const data = await game.answer(playerId, answer);
+                setAnswers((prev) => [
+                    ...prev,
+                    {
+                        answer,
+                        isCorrect: data.isCorrect,
+                    },
+                ]);
+            } catch (error) {
+                toast(error?.message ?? "Failed to submit answer");
+            }
+        }
+    }
+
     useEffect(() => {
         async function join() {
-            const player = await game.joinGame("Lucas");
+            const player: Player = await game.joinGame("Lucas");
+            setPlayerId(player.id);
             await loadPlayers();
         }
 
@@ -84,6 +110,7 @@ export default function RoomPanels({ roomId }: { roomId: string }) {
                     addMessage("The game is over");
                     break;
                 case "question_start":
+                    setAnswers([]);
                     setQuestion(payload);
                     break;
                 case "question_end":
@@ -116,11 +143,16 @@ export default function RoomPanels({ roomId }: { roomId: string }) {
                             </MenubarContent>
                         </MenubarMenu>
                     </Menubar>
-                    <QuestionPanel question={question} player={players[0] ?? null} />
+                    <QuestionPanel
+                        question={question}
+                        player={player}
+                        answers={answers}
+                        onSubmitAnswer={submitAnswer}
+                    />
                 </div>
             </Panel>
             <Panel minSize="25%" className="h-screen p-2">
-                <ChatPanel players={players} messages={messages} />
+                <ChatPanel messages={messages} players={players} player={player} />
             </Panel>
         </Group>
     );
